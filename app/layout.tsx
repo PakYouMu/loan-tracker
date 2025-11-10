@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import MousePositionProvider from "@/components/wrappers/mouse-position-wrapper";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -34,14 +35,16 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} antialiased ${Flaemische_Kanzleischrift.variable}`} suppressHydrationWarning>
       <body className="antiaaliased">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
+        <MousePositionProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+            >
+            {children}
+          </ThemeProvider>
+        </MousePositionProvider>
       </body>
     </html>
   );

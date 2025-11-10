@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ThemeSwitcher } from "@/components/context/theme-switcher";
+import { ThemeSwitcher } from "@/components/wrappers/theme-switcher-wrapper";
 
 export default function NavOverlay({ children }: { children: React.ReactNode }) {
-  // --- RESTORED: The event forwarding function ---
   const forwardMouseEvent = (e: React.MouseEvent) => {
     const canvas = document.querySelector('canvas');
     if (canvas) {
@@ -21,7 +20,6 @@ export default function NavOverlay({ children }: { children: React.ReactNode }) 
   return (
     <div 
       className="absolute top-0 left-0 right-0 z-10 w-full flex justify-between items-center py-8 px-8"
-      // --- RESTORED: Event handlers to forward mouse events ---
       onMouseMove={forwardMouseEvent}
       onMouseEnter={forwardMouseEvent}
       onMouseLeave={forwardMouseEvent}
@@ -29,15 +27,13 @@ export default function NavOverlay({ children }: { children: React.ReactNode }) 
       <Link 
         href={"/"} 
         className="font-display text-6xl antialiased tracking-tight [text-shadow:0_0_1px_currentColor]"
-        // --- RESTORED: Event handler on the link itself ---
         onMouseMove={forwardMouseEvent}
       >
-        La Clair Ligña
+          La Clair Ligña
       </Link>
       
       <div 
         className="flex items-center gap-4"
-        // --- RESTORED: Event handlers on the button container ---
         onMouseMove={forwardMouseEvent}
         onMouseEnter={forwardMouseEvent}
         onMouseLeave={forwardMouseEvent}

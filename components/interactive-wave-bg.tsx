@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useRef, useLayoutEffect, useCallback } from 'react';
 import { WAVE_CONFIG, REDUCED_MOTION_CONFIG } from '@/wave.config';
+import { MousePositionContext } from './context/mouse-position-context';
+import React, { useRef, useLayoutEffect, useCallback, useContext } from 'react';
 
 type WaveSource = {
     id: number;
@@ -20,8 +21,8 @@ const InteractiveWaveBackground = ({
     children: React.ReactNode;
     reducedMotion?: boolean;
 }) => {
+    const { x: mouseX, y: mouseY } = useContext(MousePositionContext);
     const config = reducedMotion ? REDUCED_MOTION_CONFIG : WAVE_CONFIG;
-
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const animationFrameId = useRef<number | null>(null);
