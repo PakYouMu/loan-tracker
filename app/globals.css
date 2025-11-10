@@ -69,3 +69,53 @@
     @apply bg-background text-foreground;
   }
 }
+
+.shine-text-container {
+  display: grid;
+  grid-template-areas: "center"; /* Defines a single grid area */
+}
+
+/* 
+  Styles applied to BOTH text layers to ensure they are identical 
+  and stacked in the same grid area.
+*/
+.shine-text {
+  grid-area: center;
+  transition: opacity 0.4s ease-out; /* Smooth fade for the glow layer */
+}
+
+/* 
+  The top "glow" layer.
+  We make its text color brighter. This is the color that will be revealed.
+*/
+.glow-text {
+  color: hsl(0, 0%, 100%); /* Bright white */
+  text-shadow: 0 0 10px hsla(0, 0%, 100%, 0.5); /* Optional: adds a soft glow aura */
+}
+
+/* 
+  The bottom "base" layer.
+  We make its text color slightly dimmer. This is the default state.
+*/
+.base-text {
+  color: hsl(0, 0%, 70%); /* A slightly off-white/grey */
+}
+
+/* 
+  This is the magic. We apply a mask to the glow layer.
+  The mask is a radial gradient (a circle) that is centered on our
+  CSS variables (--cursor-x, --cursor-y), which we'll control from React.
+  The circle is solid in the center and fades to transparent, creating the soft edge.
+*/
+.glow-text {
+  mask-image: radial-gradient(
+    circle 200px at var(--cursor-x) var(--cursor-y),
+    white,
+    transparent
+  );
+  -webkit-mask-image: radial-gradient(
+    circle 200px at var(--cursor-x) var(--cursor-y),
+    white,
+    transparent
+  );
+}
