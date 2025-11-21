@@ -35,7 +35,7 @@ export const WAVE_CONFIG: WaveConfig = {
     globalAmplitude: 5,
     globalFrequency: 0.02,
     lineWidth: 3,
-    amplitudeDampening: 0.069,
+    amplitudeDampening: 0.2,
 };
 
 // A separate configuration for when the user prefers reduced motion.

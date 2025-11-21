@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { AuthButton } from "@/components/auth/auth-button";
-import InteractiveWaveBackground from "@/components/interactive-wave-bg";
+import InteractiveWaveBackground from "@/components/landing-page/interactive-wave-bg";
 
-export default function ProtectedLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -19,9 +19,7 @@ export default function ProtectedLayout({
         </nav>
 
       <div className="relative min-h-0">
-        <InteractiveWaveBackground>
           {children}
-        </InteractiveWaveBackground>
       </div>
       {/* 
         <footer className="w-full flex items-center justify-center border-t mx-auto text-center text-xs py-1">

@@ -1,14 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { hasEnvVars } from "../utils";
 
 export async function updateSession(request: NextRequest) {
+  // 1. Initialize the response object
+  // We need this to be able to set cookies on the outgoing response
   let supabaseResponse = NextResponse.next({
     request,
   });
 
-  // With Fluid compute, don't put this client in a global environment
-  // variable. Always create a new one on each request.
+  // 2. Create the Supabase client
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
@@ -18,9 +18,11 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
+          // This updates the request cookies (for the current server run)
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );
+          // This updates the response cookies (to be sent to the browser)
           supabaseResponse = NextResponse.next({
             request,
           });
@@ -32,39 +34,35 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Do not run code between createServerClient and
-  // supabase.auth.getClaims(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
+  // 3. Run the Auth Check IMMEDIATELY
+  // This satisfies the warning. We run this right after client creation.
+  // getUser() is safer than getClaims() because it validates the user is not banned.
+  const { data: { user } } = await supabase.auth.getUser();
 
-  // IMPORTANT: If you remove getClaims() and you use server-side rendering
-  // with the Supabase client, your users may be randomly logged out.
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims;
+  // 4. RBAC & Protected Route Logic
+  const path = request.nextUrl.pathname;
 
+  // LOGIC: If user is NOT logged in, but trying to access protected pages
+  // (Exclude /auth/* routes so they can actually log in)
   if (
-    request.nextUrl.pathname !== "/" &&
     !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/auth")
+    !path.startsWith("/auth") &&
+    !path.startsWith("/login") &&
+    path !== "/"
   ) {
-    // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);
   }
 
-  // IMPORTANT: You *must* return the supabaseResponse object as it is.
-  // If you're creating a new response object with NextResponse.next() make sure to:
-  // 1. Pass the request in it, like so:
-  //    const myNewResponse = NextResponse.next({ request })
-  // 2. Copy over the cookies, like so:
-  //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-  // 3. Change the myNewResponse object to fit your needs, but avoid changing
-  //    the cookies!
-  // 4. Finally:
-  //    return myNewResponse
-  // If this is not done, you may be causing the browser and server to go out
-  // of sync and terminate the user's session prematurely!
+  // LOGIC: If user IS logged in, but trying to access public Auth pages
+  // (Redirect them to the dashboard so they don't login twice)
+  if (user && (path.startsWith("/auth/login") || path === "/login" || path === "/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
+  }
 
+  // 5. Return the response (Crucial for saving the refreshed cookie)
   return supabaseResponse;
 }

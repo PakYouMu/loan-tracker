@@ -1,4 +1,4 @@
-import NavOverlay from "@/components/nav-overlay";
+import NavOverlay from "@/components/landing-page/nav-overlay";
 import { AuthButton } from "@/components/auth/auth-button";
 import TutorialOverlay from "@/components/tutorial/tutorial-overlay";
 import MotionToggleWrapper from "@/components/wrappers/motion-toggle-wrapper";
