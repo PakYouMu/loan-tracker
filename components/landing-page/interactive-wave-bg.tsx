@@ -10,6 +10,7 @@ import {
   Vector2,
   Clock,
   AdditiveBlending,
+  NormalBlending, // Needed for Light Mode
   Color
 } from 'three';
 
@@ -34,12 +35,12 @@ uniform float uHover;
 uniform vec3 uColorHero;
 uniform vec3 uColorBg;
 
-// 2D Rotation Matrix
 mat2 rotate2d(float angle){
     return mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
 }
 
-vec3 renderRibbon(
+// Function returns vec4: RGB + Alpha
+vec4 renderRibbon(
     vec2 uv,             
     vec2 center,         
     float angle,         
@@ -55,6 +56,8 @@ vec3 renderRibbon(
     vec2 localMouse = (mousePos - center) * rotate2d(angle) * scale;
     
     vec3 accumulatedColor = vec3(0.0);
+    float accumulatedAlpha = 0.0;
+    
     float t = iTime * phaseSpeed + timeOffset;
     
     float gradientPos = smoothstep(-1.5, 1.5, localUv.x); 
@@ -62,7 +65,6 @@ vec3 renderRibbon(
     
     float blurLevel = smoothstep(1.0, 2.5, scale);
     
-    // 35 Lines per ribbon
     for (int i = 0; i < 35; i++) {
         float fi = float(i);
         float progress = fi / 35.0; 
@@ -74,7 +76,8 @@ vec3 renderRibbon(
         float mouseDistX = abs(localUv.x - localMouse.x);
         float mouseDistY = abs((spineY + bundleOffset) - localMouse.y);
         
-        float influence = exp(-mouseDistX * 7.0) * exp(-mouseDistY * 7.0) * uHover;
+        // Influence shape: (8.0, 8.0) for rounder, localized interaction
+        float influence = exp(-mouseDistX * 7.0) * exp(-mouseDistY * 5.0) * uHover;
         float vibration = sin(localUv.x * 40.0 - iTime * 20.0 + fi * 2.0) * 0.08 * influence;
         
         float lineY = spineY + bundleOffset + vibration;
@@ -87,66 +90,72 @@ vec3 renderRibbon(
         float blurThickness = 0.01; 
         float currentThickness = mix(baseThickness, blurThickness, blurLevel);
         
-        float glow = glowIntensity / (dist + currentThickness);
+        // Intensity determines both brightness AND opacity
+        float intensity = glowIntensity / (dist + currentThickness);
+        float combinedFade = depthFade * edgeFade;
         
-        accumulatedColor += ribbonBaseColor * glow * depthFade * edgeFade;
+        accumulatedColor += ribbonBaseColor * intensity * combinedFade;
+        accumulatedAlpha += intensity * combinedFade;
     }
     
-    return accumulatedColor;
+    return vec4(accumulatedColor, accumulatedAlpha);
 }
 
 void main() {
   vec2 uv = (2.0 * gl_FragCoord.xy - iResolution.xy) / iResolution.y;
-  vec3 finalColor = vec3(0.0);
   
-  // 1. HERO (Sharp, Low Glow)
-  finalColor += renderRibbon(
-      uv, vec2(0.0, 0.0), -0.1, 1.0,                  
+  vec3 finalColor = vec3(0.0);
+  float finalAlpha = 0.0;
+  
+  vec4 ribbon;
+  
+  // 1. HERO
+  ribbon = renderRibbon(
+      uv, vec2(0.0, 0.0), 0.0, 1.0,                  
       uColorHero, uColorHero,  
       0.0, 0.5, uMouse,
       0.00069 
   );
+  finalColor += ribbon.rgb;
+  finalAlpha += ribbon.a;
 
-  // 2. TOP LEFT (Brighter + More Bloom)
-  finalColor += renderRibbon(
+  // 2. TOP LEFT
+  ribbon = renderRibbon(
       uv, vec2(-0.96, 0.6), -0.8, 1.5,                  
       uColorBg, uColorBg, 
       2.0, 0.3, uMouse,
       0.0010 
   );
+  finalColor += ribbon.rgb;
+  finalAlpha += ribbon.a;
 
-  // 3. BOTTOM RIGHT (Brighter + More Bloom)
-  finalColor += renderRibbon(
-      uv, vec2(0.96, -0.19), -1.2, 1.5,                  
+  // 3. BOTTOM RIGHT
+  ribbon = renderRibbon(
+      uv, vec2(0.96, -0.19), 1.6, 1.5,                  
       uColorBg, uColorBg, 
       4.0, 0.4, uMouse,
       0.0010 
   );
+
+  finalColor += ribbon.rgb;
+  finalAlpha += ribbon.a;
   
-  gl_FragColor = vec4(finalColor, 1.0);
+  gl_FragColor = vec4(finalColor, min(finalAlpha, 1.0));
 }
 `;
 
 // --- PROPS & TYPES ---
 
 interface HelixCanvasProps {
-  /** The color of the central "Hero" ribbon. Defaults to #FFFFFF */
   heroColor?: string;
-  /** The color of the two background ribbons. Defaults to #cccccc */
   backgroundColor?: string;
-  /** Multiplier for the animation speed. Defaults to 1.0 */
   speed?: number;
-  /** How quickly the mouse movement is smoothed (0.0 - 1.0). Defaults to 0.1 */
   mouseDamping?: number;
-  /** CSS mix-blend-mode for the container (e.g., 'screen', 'lighten'). */
   mixBlendMode?: React.CSSProperties['mixBlendMode'];
-  /** CSS opacity */
   opacity?: number;
+  darkMode?: boolean; // <--- This was missing in your file
 }
 
-/**
- * Helper to convert hex/string color to Three.js Vector3 (0-1 range)
- */
 function colorToVec3(colorString: string): Vector3 {
   const c = new Color(colorString);
   return new Vector3(c.r, c.g, c.b);
@@ -154,11 +163,12 @@ function colorToVec3(colorString: string): Vector3 {
 
 export default function HelixCanvas({
   heroColor = '#ffffff',
-  backgroundColor = '#cccccc', // Bright grey as requested (0.8 equivalent)
+  backgroundColor = '#cccccc',
   speed = 1.0,
   mouseDamping = 0.1,
   mixBlendMode,
-  opacity = 1
+  opacity = 1,
+  darkMode = true 
 }: HelixCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mouseRef = useRef<Vector2>(new Vector2(0, 0));
@@ -172,15 +182,14 @@ export default function HelixCanvas({
     const camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
     camera.position.z = 1;
 
+    // Alpha: true is crucial for Light Mode transparency
     const renderer = new WebGLRenderer({ 
       antialias: true, 
-      alpha: true // Important for CSS blending
+      alpha: true 
     });
     
-    // Set high pixel ratio for sharpness
     const dpr = Math.min(window.devicePixelRatio, 2);
     renderer.setPixelRatio(dpr);
-    
     const el = containerRef.current;
     renderer.setSize(el.clientWidth, el.clientHeight);
     el.appendChild(renderer.domElement);
@@ -198,7 +207,8 @@ export default function HelixCanvas({
       uniforms,
       vertexShader,
       fragmentShader,
-      blending: AdditiveBlending, // Crucial for the glowing look
+      // Logic: If Dark Mode -> Additive (Glowing). If Light Mode -> Normal (Ink-like)
+      blending: darkMode ? AdditiveBlending : NormalBlending,
       depthTest: false,
       transparent: true
     });
@@ -209,7 +219,6 @@ export default function HelixCanvas({
 
     const clock = new Clock();
 
-    // -- Resize Observer --
     const handleResize = () => {
       if (!containerRef.current) return;
       const w = containerRef.current.clientWidth;
@@ -221,13 +230,11 @@ export default function HelixCanvas({
     const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(el);
 
-    // -- Mouse Events --
     const handlePointerMove = (e: PointerEvent) => {
       const rect = el.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       
-      // Standardize coordinates for the shader aspect ratio correction
       const resX = uniforms.iResolution.value.x;
       const resY = uniforms.iResolution.value.y;
       
@@ -245,20 +252,12 @@ export default function HelixCanvas({
     el.addEventListener('pointermove', handlePointerMove);
     el.addEventListener('pointerleave', handlePointerLeave);
 
-    // -- Animation Loop --
     let raf = 0;
     const animate = () => {
-      // Time
       uniforms.iTime.value = clock.getElapsedTime() * speed;
-
-      // Smooth Mouse
       mouseRef.current.lerp(targetMouseRef.current, mouseDamping);
       uniforms.uMouse.value.copy(mouseRef.current);
-
-      // Smooth Hover
       uniforms.uHover.value += (isHoveringRef.current - uniforms.uHover.value) * mouseDamping;
-
-      // Update Colors (in case props change)
       uniforms.uColorHero.value.copy(colorToVec3(heroColor));
       uniforms.uColorBg.value.copy(colorToVec3(backgroundColor));
 
@@ -281,7 +280,7 @@ export default function HelixCanvas({
         renderer.domElement.parentElement.removeChild(renderer.domElement);
       }
     };
-  }, [heroColor, backgroundColor, speed, mouseDamping]);
+  }, [heroColor, backgroundColor, speed, mouseDamping, darkMode]); 
 
   return (
     <div 
@@ -291,7 +290,7 @@ export default function HelixCanvas({
         height: '100%',
         opacity: opacity,
         mixBlendMode: mixBlendMode,
-        pointerEvents: 'auto' // Ensure mouse events work
+        pointerEvents: 'auto'
       }}
     />
   );
