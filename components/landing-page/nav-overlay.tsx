@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ThemeSwitcher } from "@/components/wrappers/theme-switcher-wrapper";
-import MetallicSheen from "@/components/wrappers/metallic-sheen";
+import MetallicSheen from "@/components/wrappers/metallic-sheen-wrapper";
 
 export default function NavOverlay({ children }: { children: React.ReactNode }) {
   

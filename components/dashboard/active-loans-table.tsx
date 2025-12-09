@@ -7,9 +7,9 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { PaymentDialog } from "./payment-dialog";
-import { CreateLoanModal } from "./create-loan-modal"; 
-import { SignaturePreview } from "./signature-modal";
+import { PaymentDialog } from "./modals/payment-dialog";
+import { CreateLoanModal } from "./modals/create-loan-modal";
+import { SignaturePreview } from "./modals/signature-modal";
 import { LoanSummary } from "@/lib/types/schema"; 
 import { CalendarClock } from "lucide-react";
 

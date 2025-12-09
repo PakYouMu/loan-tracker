@@ -20,7 +20,7 @@ export default function DashboardLayout({
           - h-full ensures it takes remaining space
           - overflow-hidden ensures no scroll bars appear on the page body
       */}
-      <div className="relative w-full h-full pt-32 md:pt-40">
+      <div className="relative w-full h-full pt-16 md:pt-32">
         {children}
       </div>
       

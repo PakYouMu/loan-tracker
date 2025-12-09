@@ -2,7 +2,7 @@ import NavOverlay from "@/components/landing-page/nav-overlay";
 import { AuthButton } from "@/components/auth/auth-button";
 import TutorialOverlay from "@/components/tutorial/tutorial-overlay";
 import MotionToggleWrapper from "@/components/wrappers/motion-toggle-wrapper";
-import MetallicSheen from "@/components/wrappers/metallic-sheen";
+import MetallicSheen from "@/components/wrappers/metallic-sheen-wrapper";
 
 export default function Home() {
   return (
@@ -15,12 +15,6 @@ export default function Home() {
         <div className="w-full h-full px-5 flex flex-col items-center justify-center">
           
           <MetallicSheen>
-            {/* 
-               UPDATES:
-               1. Reverted text size to: text-[clamp(2rem,8vw,4rem)]
-               2. Removed 'select-none' so you can highlight text.
-               3. Removed 'cursor-default' so it behaves like normal text.
-            */}
             <h1 className="font-serif text-[clamp(2rem,8vw,4rem)] leading-tight text-center font-bold tracking-tighter py-4">
                 <span>WHERE YOU KEEP</span>
 
