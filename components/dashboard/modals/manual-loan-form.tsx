@@ -49,7 +49,7 @@ export function ManualLoanForm({ onSuccess, onCancel, onSwitchToScan }: ManualLo
   }
 
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-3 p-1">
       <div className="grid gap-3" style={{ gridTemplateColumns: '2fr 1.5fr' }}>
         <div className="grid gap-1.5">
           <Label className="text-sm">Borrower Name</Label>
