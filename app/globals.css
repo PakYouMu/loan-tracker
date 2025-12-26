@@ -151,6 +151,50 @@
 .py-responsive { padding-top: var(--spacing-md); padding-bottom: var(--spacing-md); }
 .gap-responsive { gap: var(--spacing-md); }
 
+/* --- METALLIC SYSTEM --- */
+
+.metallic-text-effect {
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+  padding-bottom: 0.1em; 
+  background-image: 
+    radial-gradient(
+      circle 100px at var(--mouse-x, -999px) var(--mouse-y, -999px),
+      rgba(255, 255, 255, 1) 0%,
+      rgba(255, 255, 255, 0.5) 15%,
+      transparent 40%
+    ),
+    linear-gradient(
+      135deg,
+      #333 0%,
+      #666 25%,
+      #333 50%,
+      #666 75%,
+      #333 100%
+    );
+  background-size: 100% 100%;
+  will-change: background-image;
+}
+
+.dark .metallic-text-effect {
+  background-image: 
+    radial-gradient(
+      circle 120px at var(--mouse-x, -999px) var(--mouse-y, -999px),
+      rgba(255, 255, 255, 1) 0%,
+      rgba(255, 255, 255, 0.6) 20%,
+      transparent 50%
+    ),
+    linear-gradient(
+      135deg,
+      #9ca3af 0%,
+      #e5e7eb 25%,
+      #9ca3af 50%,
+      #e5e7eb 75%,
+      #9ca3af 100%
+    );
+}
+
 /* === GRID LAYOUT SYSTEM === */
 
 .bento-section {

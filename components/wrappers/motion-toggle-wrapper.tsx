@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import HelixCanvas from "../landing-page/interactive-wave-bg";
 import { useMotion } from "@/components/context/motion-context"; // Import Context
-import { MotionToggleButton } from "@/components/ui/motion-toggle-button"; // Import Button
 
 export default function MotionToggleWrapper({ children }: { children: React.ReactNode }) {
   const { reduceMotion } = useMotion(); // Use Global State
@@ -39,9 +38,6 @@ export default function MotionToggleWrapper({ children }: { children: React.Reac
           backgroundColor={isDark ? "#cccccc" : "#444444"} 
         />
       </div>
-
-      {/* USE REUSABLE BUTTON (Positioned Bottom Left for Landing Page) */}
-      <MotionToggleButton className="absolute bottom-8 left-8" />
 
       {/* Content Layer */}
       <div className="relative z-10 w-full h-full flex flex-col items-center justify-center pointer-events-none">

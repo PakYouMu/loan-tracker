@@ -2,7 +2,6 @@
 
 import { useMotion } from "@/components/context/motion-context"; 
 import MagicBento, { BentoCard } from "@/components/ui/magic-bento";
-import { MotionToggleButton } from "@/components/ui/motion-toggle-button";
 import { AddCapitalDialog } from "@/components/dashboard/modals/add-capital-dialog";
 import { 
   Wallet, TrendingUp, Users, AlertTriangle, 
@@ -198,10 +197,6 @@ export function DashboardGrid({ stats, charts }: DashboardGridProps) {
         </BentoCard>
 
       </MagicBento>
-
-      <div className="fixed bottom-8 left-8 z-50">
-        <MotionToggleButton />
-      </div>
     </div>
   );
 }
