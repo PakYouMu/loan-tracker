@@ -20,14 +20,13 @@ const ThemeSwitcher = () => {
   }, []);
 
   if (!mounted) {
-    return null;
+    return <div className="w-5 h-5" />;
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        {/* Replaced shadcn Button with standard button + CSS class for consistency */}
-        <button className="nav-action-btn">
+        <button className="nav-action-btn" aria-label="Select theme">
           {theme === "light" ? (
             <Sun key="light" className="nav-action-icon" />
           ) : theme === "dark" ? (
@@ -38,21 +37,20 @@ const ThemeSwitcher = () => {
         </button>
       </DropdownMenuTrigger>
       
-      {/* ADDED: side="right" to position menu to the right of the button */}
       <DropdownMenuContent className="w-content" side="right" align="center">
         <DropdownMenuRadioGroup
           value={theme}
           onValueChange={(e) => setTheme(e)}
         >
-          <DropdownMenuRadioItem className="flex gap-2" value="light">
+          <DropdownMenuRadioItem className="flex gap-2 cursor-pointer" value="light">
             <Sun size={16} className="text-muted-foreground" />{" "}
             <span>Light</span>
           </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem className="flex gap-2" value="dark">
+          <DropdownMenuRadioItem className="flex gap-2 cursor-pointer" value="dark">
             <Moon size={16} className="text-muted-foreground" />{" "}
             <span>Dark</span>
           </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem className="flex gap-2" value="system">
+          <DropdownMenuRadioItem className="flex gap-2 cursor-pointer" value="system">
             <Laptop size={16} className="text-muted-foreground" />{" "}
             <span>System</span>
           </DropdownMenuRadioItem>

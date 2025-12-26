@@ -11,7 +11,6 @@ import { useTheme } from "next-themes";
 import { useMotion } from "@/components/context/motion-context";
 import { useAuth } from "@/components/wrappers/auth-wrapper";
 
-
 interface NavOverlayProps {
   navItems?: React.ReactNode; 
 }
@@ -20,15 +19,13 @@ export default function NavOverlay({ navItems }: NavOverlayProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   
-  // === USE THE CONTEXT ===
-  // No fetching, no useEffects. Just immediate data.
   const { user, isLoading, signOut } = useAuth();
   
   const pathname = usePathname(); 
-  const { theme, setTheme } = useTheme();
+  // CHANGED: Destructure resolvedTheme to know the ACTUAL look (System Dark vs Real Dark)
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const { toggleMotion } = useMotion();
 
-  // Close menu on route change
   useEffect(() => {
     if (isMenuOpen) {
       handleClose();
@@ -36,7 +33,6 @@ export default function NavOverlay({ navItems }: NavOverlayProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
-  // Lock body scroll
   useEffect(() => {
     document.body.style.overflow = isMenuOpen ? 'hidden' : 'unset';
   }, [isMenuOpen]);
@@ -76,8 +72,12 @@ export default function NavOverlay({ navItems }: NavOverlayProps) {
   };
 
   const handleThemeRowClick = (e: React.MouseEvent) => {
+    // Prevent triggering if clicking the button directly (redundant with stopPropagation below, but good safety)
     if ((e.target as HTMLElement).closest('.nav-action-btn')) return;
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    
+    // CHANGED: Toggle based on what the user SEES (resolvedTheme), not just the setting string.
+    // This ensures if you are on "System (Dark)", clicking the row toggles to "Light".
+    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
   };
 
   const handleLogoutClick = async () => {
@@ -85,44 +85,57 @@ export default function NavOverlay({ navItems }: NavOverlayProps) {
     handleClose();
   };
 
-  // Render auth buttons based on Context State
   const renderAuthButtons = () => {
     if (isLoading) {
       return (
         <div className="nav-auth-wrapper">
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <div style={{ flex: 1, height: '2.25rem', background: 'hsl(var(--muted) / 0.3)', borderRadius: '0.75rem' }} />
-            <div style={{ flex: 1, height: '2.25rem', background: 'hsl(var(--muted) / 0.3)', borderRadius: '0.75rem' }} />
+          <div>
+            <div className="h-9 w-24 rounded-xl bg-muted/30 animate-pulse" />
+            <div className="h-9 w-24 rounded-xl bg-muted/30 animate-pulse" />
           </div>
         </div>
       );
     }
 
-    // Authenticated
     if (user) {
       return (
-        <div className="nav-auth-wrapper">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
-            <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'hsl(var(--muted-foreground))', textAlign: 'center' }}>
-              Welcome back, <span style={{ color: 'hsl(var(--foreground))', fontWeight: 700 }}>
-                {/* We use user_metadata for the name if available, or email */}
-                {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
-              </span>
+        <div className="w-full space-y-3">
+          <div className="text-center text-sm text-muted-foreground">
+            Welcome back, <span className="font-bold text-foreground">
+              {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
             </span>
-            <button onClick={handleLogoutClick} style={{ width: '100%' }}>
-              Sign Out
-            </button>
+          </div>
+          
+          <div className="nav-auth-wrapper">
+            <div>
+              <button 
+                onClick={handleLogoutClick}
+                className="nav-auth-btn nav-auth-btn-primary"
+              >
+                Sign Out
+              </button>
+            </div>
           </div>
         </div>
       );
     }
 
-    // Not Authenticated
     return (
       <div className="nav-auth-wrapper">
         <div>
-          <Link href="/auth/login">Sign in</Link>
-          <Link href="/auth/sign-up">Sign up</Link>
+          <Link 
+            href="/auth/login" 
+            className="nav-auth-btn nav-auth-btn-primary"
+          >
+            Sign in
+          </Link>
+          
+          <Link 
+            href="/auth/sign-up" 
+            className="nav-auth-btn nav-auth-btn-outline"
+          >
+            Sign up
+          </Link>
         </div>
       </div>
     );
@@ -170,18 +183,37 @@ export default function NavOverlay({ navItems }: NavOverlayProps) {
               <div className="nav-content-width space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
                 <div className="nav-preference-label-center">Preferences</div>
                 <div className="nav-preferences-grid">
+                  
+                  {/* APPEARANCE ROW */}
                   <div className="nav-preference-row-thin nav-btn-half" onClick={handleThemeRowClick}>
                     <span className="font-medium text-sm">Appearance</span>
-                    <div className="scale-90 transition-transform hover:scale-95">
+                    
+                    {/* 
+                        CHANGED: Added onClick={e => e.stopPropagation()} 
+                        This prevents clicks inside the dropdown (like selecting "System")
+                        from bubbling up and triggering handleThemeRowClick.
+                    */}
+                    <div 
+                      className="scale-90 transition-transform hover:scale-95"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <ThemeSwitcher />
                     </div>
                   </div>
+
+                  {/* ANIMATIONS ROW */}
                   <div className="nav-preference-row-thin nav-btn-half" onClick={toggleMotion}>
                     <span className="font-medium text-sm">Animations</span>
-                    <div className="scale-90 transition-transform hover:scale-95">
+                    
+                    {/* Added stopPropagation here too for consistency */}
+                    <div 
+                      className="scale-90 transition-transform hover:scale-95"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <MotionToggleButton />
                     </div>
                   </div>
+                  
                 </div>
               </div>
             </div>
