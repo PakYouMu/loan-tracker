@@ -5,6 +5,8 @@ import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { MotionProvider } from "@/components/context/motion-context";
 import MousePositionProvider from "@/components/wrappers/mouse-position-wrapper";
+import { GlobalNav } from "@/components/wrappers/nav-wrapper";
+import { AuthButton } from "@/components/auth/auth-button"; // Server Component
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -12,8 +14,8 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Next.js and Supabase Starter Kit",
-  description: "The fastest way to build apps with Next.js and Supabase",
+  title: "La Clair Ligña",
+  description: "Lending Management System",
 };
 
 const geistSans = Geist({
@@ -35,7 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} antialiased ${Flaemische_Kanzleischrift.variable}`} suppressHydrationWarning>
-      <body className="antiaaliased">
+      <body className="antialiased bg-background text-foreground">
         <MotionProvider>
           <MousePositionProvider>
             <ThemeProvider
@@ -43,8 +45,21 @@ export default function RootLayout({
               defaultTheme="system"
               enableSystem
               disableTransitionOnChange
-              >
+            >
+              {/* 
+                  GLOBAL NAVIGATION WRAPPER 
+                  This ensures Nav persists across all pages.
+                  We pass AuthButton (Server Component) as a prop to the Client Component.
+              */}
+              <div className="relative min-h-screen flex flex-col">
+                <GlobalNav authButton={<AuthButton />} />
+                
+                {/* Main Content */}
+                <main className="flex-1 w-full h-full">
                   {children}
+                </main>
+              </div>
+
             </ThemeProvider>
           </MousePositionProvider>
         </MotionProvider>

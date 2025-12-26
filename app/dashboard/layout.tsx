@@ -1,29 +1,16 @@
-import NavOverlay from "@/components/landing-page/nav-overlay";
-import { AuthButton } from "@/components/auth/auth-button";
-
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    // 1. Lock height to screen, disable scroll, relative positioning
     <div className="h-screen w-full relative bg-background">
+      {/* NavOverlay removed. Just handle spacing. */}
       
-      {/* 2. Navigation (Absolute Top) */}
-      <NavOverlay>
-        <AuthButton />
-      </NavOverlay>
-
-      {/* 3. Content Area 
-          - pt-32 pushes content below the NavOverlay
-          - h-full ensures it takes remaining space
-          - overflow-hidden ensures no scroll bars appear on the page body
-      */}
+      {/* Content Area - Maintain padding to account for fixed Nav */}
       <div className="relative w-full h-full pt-16 md:pt-32">
         {children}
       </div>
-      
     </div>
   );
 }

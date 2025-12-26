@@ -151,8 +151,86 @@
 .py-responsive { padding-top: var(--spacing-md); padding-bottom: var(--spacing-md); }
 .gap-responsive { gap: var(--spacing-md); }
 
-/* --- METALLIC SYSTEM --- */
+/* === GRID LAYOUT SYSTEM === */
 
+.bento-section {
+  width: 100%;
+  padding-bottom: 1rem;
+}
+
+.card-grid {
+  display: grid;
+  width: 100%;
+  margin: 0 auto;
+  gap: var(--spacing-md);
+  grid-template-columns: 1fr; 
+  max-width: 100%;
+}
+
+@media (min-width: 395px) {
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .card-grid {
+    grid-template-columns: repeat(4, 1fr); 
+    max-width: 100%;
+  }
+}
+
+/* === SPANS === */
+.col-span-1 { grid-column: span 1; }
+.col-span-2 { grid-column: span 1; }
+@media (min-width: 395px) {
+  .col-span-2 { grid-column: span 2; }
+}
+.row-span-2 { grid-row: span 1; }
+@media (min-width: 768px) {
+  .row-span-2 { grid-row: span 2; }
+}
+
+/* === CARD STYLES === */
+.magic-bento-card {
+  position: relative;
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.magic-bento-card--border-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  padding: 2px;
+  background: radial-gradient(
+    var(--glow-radius) circle at var(--glow-x) var(--glow-y),
+    rgba(var(--glow-color), var(--glow-intensity)) 0%,
+    transparent 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 10;
+}
+.magic-bento-card__content {
+  padding: clamp(0.75rem, 1.5vw, 1.25rem);
+  height: 100%;
+  width: 100%;
+  z-index: 2;
+  position: relative;
+  background: inherit;
+}
+.magic-bento-card__content--no-padding { padding: 0; }
+
+/* --- METALLIC SYSTEM --- */
 .metallic-text-effect {
   color: transparent;
   background-clip: text;
@@ -176,7 +254,6 @@
   background-size: 100% 100%;
   will-change: background-image;
 }
-
 .dark .metallic-text-effect {
   background-image: 
     radial-gradient(
@@ -195,99 +272,177 @@
     );
 }
 
-/* === GRID LAYOUT SYSTEM === */
+/* ========================================================== */
+/* === NAVIGATION OVERLAY STYLES === */
+/* ========================================================== */
 
-.bento-section {
+.nav-overlay-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
   width: 100%;
-  padding-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem; /* py-4 px-5 */
+  pointer-events: none;
 }
 
-.card-grid {
-  display: grid;
-  width: 100%;
-  margin: 0 auto;
-  gap: var(--spacing-md);
-  
-  /* 1. Mobile < 395px: 1 Column */
-  grid-template-columns: 1fr; 
-  max-width: 100%;
-}
-
-/* 2. Compact -> Laptop (395px - 1279px): 2 Columns */
-@media (min-width: 395px) {
-  .card-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* 3. Large Screens (1280px+): 4 Columns */
-@media (min-width: 1280px) {
-  .card-grid {
-    grid-template-columns: repeat(4, 1fr); 
-    max-width: 100%;
-  }
-}
-
-/* === SPANS === */
-
-/* Default Item Span */
-.col-span-1 { grid-column: span 1; }
-
-/* Chart Span */
-/* Default (<395px): Span 1 (Safety) */
-.col-span-2 { grid-column: span 1; }
-
-/* 395px+: Span 2 */
-/* In a 2-col grid, this equals 100% width (Stacked) */
-/* In a 4-col grid, this equals 50% width (Side-by-Side) */
-@media (min-width: 395px) {
-  .col-span-2 { grid-column: span 2; }
-}
-
-/* Row Spans */
-.row-span-2 { grid-row: span 1; }
 @media (min-width: 768px) {
-  .row-span-2 { grid-row: span 2; }
+  .nav-overlay-container {
+    padding: 2rem 2rem; /* md:py-8 md:px-8 */
+  }
 }
 
-/* === CARD STYLES === */
-.magic-bento-card {
-  position: relative;
-  background-color: hsl(var(--card));
-  border: 1px solid hsl(var(--border));
-  border-radius: 12px;
-  overflow: hidden;
+/* --- LOGO SETTINGS --- */
+.nav-logo-link {
+  display: block;
+  pointer-events: auto;
+  z-index: 50;
+  font-family: var(--font-display), serif; 
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: 0.05em;
+  margin-left: 0.5rem; 
+}
+
+.nav-logo-sheen {
+  padding-left: 0.1rem !important; 
+  padding-right: 1rem !important; 
+}
+
+.nav-logo-text {
+  font-size: clamp(1.5rem, 5vw, 4rem);
+  line-height: 1.25;
+  font-weight: 700;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+/* --- BURGER BUTTON --- */
+.nav-burger-container {
+  pointer-events: auto;
+  z-index: 50;
+}
+
+.nav-burger-btn {
+  padding: 0.5rem;
+  border-radius: calc(var(--radius) - 2px);
+  border-width: 1px;
+  border-color: transparent;
+  backdrop-filter: blur(4px);
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-burger-btn:hover {
+  background-color: hsl(var(--muted) / 0.2);
+  border-color: hsl(var(--border));
+}
+
+/* --- MOBILE MENU OVERLAY --- */
+@keyframes nav-overlay-enter {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.nav-mobile-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
   display: flex;
   flex-direction: column;
-  transform-style: preserve-3d;
-  will-change: transform;
+  pointer-events: auto;
+  background-color: hsl(var(--background) / 0.95);
+  backdrop-filter: blur(24px);
+  animation: nav-overlay-enter 0.2s ease-out forwards;
 }
 
-.magic-bento-card--border-glow::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  padding: 2px;
-  background: radial-gradient(
-    var(--glow-radius) circle at var(--glow-x) var(--glow-y),
-    rgba(var(--glow-color), var(--glow-intensity)) 0%,
-    transparent 100%
-  );
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  z-index: 10;
+.nav-preference-label {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-align: center;
+  margin-bottom: 0.5rem;
 }
 
-.magic-bento-card__content {
-  padding: clamp(0.75rem, 1.5vw, 1.25rem);
-  height: 100%;
+.nav-preference-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-radius: 1rem;
+  background-color: hsl(var(--muted) / 0.4);
+  border: 1px solid hsl(var(--border) / 0.5);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  user-select: none;
+}
+
+.nav-preference-row:hover {
+  background-color: hsl(var(--muted) / 0.6);
+  border-color: hsl(var(--border));
+}
+
+.nav-preference-row:active {
+  background-color: hsl(var(--muted) / 0.8);
+}
+
+/* --- NEW: SETTINGS BUTTONS (Pure CSS) --- */
+.nav-action-btn {
+  background-color: transparent;
+  border: none;
+  padding: 0.5rem; /* p-2 equivalent */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem; /* rounded-md */
+  transition: background-color 0.2s ease;
+  color: hsl(var(--muted-foreground));
+}
+
+.nav-action-btn:hover {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}
+
+.nav-action-icon {
+  width: 1rem;  /* 16px */
+  height: 1rem; /* 16px */
+}
+
+/* === NAVIGATION LINKS (New) === */
+.nav-section-title {
+  @apply text-sm font-medium text-muted-foreground uppercase tracking-widest text-center mb-4 mt-2;
+  font-size: 0.75rem; /* smaller than preference label */
+}
+
+.nav-link-item {
+  display: block;
   width: 100%;
-  z-index: 2;
-  position: relative;
-  background: inherit;
+  text-align: center;
+  padding: 0.75rem;
+  font-size: 1.25rem; /* text-xl */
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  border-radius: 0.5rem;
+  transition: background-color 0.2s, color 0.2s;
+  /* Font Display for flavor */
+  font-family: var(--font-display), serif; 
+  letter-spacing: -0.02em;
 }
 
-.magic-bento-card__content--no-padding { padding: 0; }
+.nav-link-item:hover {
+  background-color: hsl(var(--muted) / 0.5);
+}
+
+.nav-separator {
+  width: 20%;
+  height: 1px;
+  background-color: hsl(var(--border));
+  margin: 1.5rem auto;
+}
