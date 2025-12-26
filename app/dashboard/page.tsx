@@ -7,7 +7,7 @@ import { DashboardGrid } from "@/components/dashboard/dashboard-grid";
 
 // 2. Import the Server Components (The heavy tables)
 import { ActiveLoansTable } from "@/components/dashboard/active-loans-table";
-import { BorrowerList } from "@/components/dashboard/borrower-list";
+// import { BorrowerList } from "@/components/dashboard/borrower-list";
 
 export default async function DashboardPage() {
   // A. Security Check
