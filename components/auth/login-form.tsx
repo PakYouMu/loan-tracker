@@ -41,10 +41,9 @@ export function LoginForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <div className="flex flex-col text-center mb-4">
-        <h1 className="text-2xl font-serif font-bold tracking-tight">LoanApp</h1>
-        <p className="text-sm text-muted-foreground">Sign in to manage your workspace</p>
+    <div className={cn("flex flex-col gap-4 invert text-white mix-blend-difference", className)} {...props}>
+      <div className="flex flex-col text-center">
+        <p className="text-xl font-serif">Sign in to manage your workspace</p>
       </div>
 
       <form onSubmit={handleLogin}>
@@ -58,10 +57,10 @@ export function LoginForm({
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              // Using backdrop-blur to ensure readability if lines pass under inputs
-              className="h-11 bg-background/60 backdrop-blur-sm border-foreground/20 focus-visible:ring-foreground/50 transition-all"
+              className="h-11 bg-background/40 border-white/30 text-white placeholder:text-white/70 focus-visible:ring-white/50 transition-all"
             />
           </div>
+          
           <div className="grid gap-2">
             <div className="flex items-center">
               <Label htmlFor="password" className="font-semibold">Password</Label>
@@ -78,32 +77,31 @@ export function LoginForm({
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="h-11 bg-background/60 backdrop-blur-sm border-foreground/20 focus-visible:ring-foreground/50 transition-all"
+              className="h-11 bg-background/40 backdrop-blur-sm border-white/30 text-white focus-visible:ring-white/50 transition-all"
             />
           </div>
           
           {error && (
-            <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md font-medium">
+            <div className="bg-destructive/20 text-destructive-foreground text-sm p-3 rounded-md font-bold border border-destructive/50">
               {error}
             </div>
           )}
 
-          <Button type="submit" className="w-full h-11 mt-4 font-bold" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            className="w-full h-11 mt-4 font-bold bg-white text-black hover:bg-gray-200 border-none" 
+            disabled={isLoading}
+          >
             {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Accessing...
-              </>
-            ) : (
-              "Login"
-            )}
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Login</>
+            ) : "Login"}
           </Button>
         </div>
-        <div className="mt-6 text-center text-sm text-muted-foreground">
+        <div className="mt-6 text-center text-sm">
           Don&apos;t have an account?{" "}
           <Link
             href="/auth/sign-up"
-            className="font-bold text-foreground underline-offset-4 hover:underline"
+            className="font-bold underline-offset-4 hover:underline"
           >
             Sign up
           </Link>

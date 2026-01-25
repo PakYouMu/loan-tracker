@@ -50,11 +50,9 @@ export function SignUpForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      {/* Header matching Login Form style */}
+    <div className={cn("flex flex-col text-white invert mix-blend-difference", className)} {...props}>
       <div className="flex flex-col text-center mb-4">
-        <h1 className="text-2xl font-serif font-bold tracking-tight">Create Account</h1>
-        <p className="text-sm text-muted-foreground">Join La Clair Ligña workspace</p>
+        <p className="text-xl font-serif">Join La Clair Ligña</p>
       </div>
 
       <form onSubmit={handleSignUp}>
@@ -70,12 +68,10 @@ export function SignUpForm({
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              // Glassmorphism style to match Login Form
-              className="h-11 bg-background/60 backdrop-blur-sm border-foreground/20 focus-visible:ring-foreground/50 transition-all"
+              className="h-11 bg-background/40 backdrop-blur-sm border-white/30 text-white placeholder:text-white/70 focus-visible:ring-white/50 transition-all"
             />
           </div>
 
-          {/* Password Input */}
           <div className="grid gap-2">
             <Label htmlFor="password" className="font-semibold">Password</Label>
             <Input
@@ -84,7 +80,7 @@ export function SignUpForm({
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="h-11 bg-background/60 backdrop-blur-sm border-foreground/20 focus-visible:ring-foreground/50 transition-all"
+              className="h-11 bg-background/40 backdrop-blur-sm border-white/30 text-white focus-visible:ring-white/50 transition-all"
             />
           </div>
 
@@ -97,19 +93,19 @@ export function SignUpForm({
               required
               value={repeatPassword}
               onChange={(e) => setRepeatPassword(e.target.value)}
-              className="h-11 bg-background/60 backdrop-blur-sm border-foreground/20 focus-visible:ring-foreground/50 transition-all"
+              className="h-11 bg-background/40 backdrop-blur-sm border-white/30 text-white focus-visible:ring-white/50 transition-all"
             />
           </div>
 
           {/* Error Box */}
           {error && (
-            <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md font-medium border border-destructive/20">
+            <div className="bg-destructive/20 text-destructive-foreground text-sm p-3 rounded-md font-bold border border-destructive/50">
               {error}
             </div>
           )}
 
           {/* Submit Button */}
-          <Button type="submit" className="w-full h-11 mt-4 font-bold" disabled={isLoading}>
+          <Button type="submit" className="w-full h-11 mt-4 font-bold bg-white text-black hover:bg-gray-200 border-none" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
