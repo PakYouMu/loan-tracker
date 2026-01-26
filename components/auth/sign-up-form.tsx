@@ -7,13 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { useTheme } from "next-themes";
 
 export function SignUpForm({
   className,
+  textColor,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: React.ComponentPropsWithoutRef<"div"> & { textColor?: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
@@ -29,6 +31,7 @@ export function SignUpForm({
 
     if (password !== repeatPassword) {
       setError("Passwords do not match");
+      setIsLoading(false);
       return;
     }
 
@@ -49,10 +52,19 @@ export function SignUpForm({
     }
   };
 
+  // Use textColor if provided, otherwise default to white
+  const finalTextColor = textColor || "white";
+
   return (
-    <div className={cn("flex flex-col text-white invert mix-blend-difference", className)} {...props}>
+    <div className={cn("flex flex-col", className)} {...props}>
+      {/* Header */}
       <div className="flex flex-col text-center mb-4">
-        <p className="text-xl font-serif">Join La Clair Ligña</p>
+        <p 
+          className="text-xl font-serif"
+          style={{ color: finalTextColor }}
+        >
+          Join La Clair Ligña
+        </p>
       </div>
 
       <form onSubmit={handleSignUp}>
@@ -60,7 +72,13 @@ export function SignUpForm({
           
           {/* Email Input */}
           <div className="grid gap-2">
-            <Label htmlFor="email" className="font-semibold">Email</Label>
+            <Label 
+              htmlFor="email" 
+              className="font-semibold"
+              style={{ color: finalTextColor }}
+            >
+              Email
+            </Label>
             <Input
               id="email"
               type="email"
@@ -68,44 +86,83 @@ export function SignUpForm({
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-11 bg-background/40 backdrop-blur-sm border-white/30 text-white placeholder:text-white/70 focus-visible:ring-white/50 transition-all"
+              className="h-11 border shadow-none focus-visible:ring-1 bg-transparent"
+              style={{
+                borderColor: finalTextColor === 'black' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.3)',
+                color: finalTextColor,
+              }}
             />
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="password" className="font-semibold">Password</Label>
+            <Label 
+              htmlFor="password" 
+              className="font-semibold"
+              style={{ color: finalTextColor }}
+            >
+              Password
+            </Label>
             <Input
               id="password"
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="h-11 bg-background/40 backdrop-blur-sm border-white/30 text-white focus-visible:ring-white/50 transition-all"
+              className="h-11 border shadow-none focus-visible:ring-1 bg-transparent"
+              style={{
+                borderColor: finalTextColor === 'black' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.3)',
+                color: finalTextColor,
+              }}
             />
           </div>
 
           {/* Repeat Password Input */}
           <div className="grid gap-2">
-            <Label htmlFor="repeat-password" className="font-semibold">Repeat Password</Label>
+            <Label 
+              htmlFor="repeat-password" 
+              className="font-semibold"
+              style={{ color: finalTextColor }}
+            >
+              Repeat Password
+            </Label>
             <Input
               id="repeat-password"
               type="password"
               required
               value={repeatPassword}
               onChange={(e) => setRepeatPassword(e.target.value)}
-              className="h-11 bg-background/40 backdrop-blur-sm border-white/30 text-white focus-visible:ring-white/50 transition-all"
+              className="h-11 border shadow-none focus-visible:ring-1 bg-transparent"
+              style={{
+                borderColor: finalTextColor === 'black' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.3)',
+                color: finalTextColor,
+              }}
             />
           </div>
 
           {/* Error Box */}
           {error && (
-            <div className="bg-destructive/20 text-destructive-foreground text-sm p-3 rounded-md font-bold border border-destructive/50">
+            <div 
+              className="text-sm p-3 rounded-md font-bold"
+              style={{
+                backgroundColor: 'rgba(255, 0, 0, 0.15)',
+                color: '#ff0000',
+                border: '1px solid rgba(255, 0, 0, 0.4)',
+              }}
+            >
               {error}
             </div>
           )}
 
           {/* Submit Button */}
-          <Button type="submit" className="w-full h-11 mt-4 font-bold bg-white text-black hover:bg-gray-200 border-none" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            className="w-full h-11 mt-4 font-bold border-none hover:opacity-90 transition-opacity" 
+            disabled={isLoading}
+            style={{
+              backgroundColor: finalTextColor,
+              color: finalTextColor === 'black' ? 'white' : 'black',
+            }}
+          >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -118,11 +175,12 @@ export function SignUpForm({
         </div>
 
         {/* Footer Link */}
-        <div className="mt-6 text-center text-sm text-muted-foreground">
+        <div className="mt-6 text-center text-sm" style={{ color: finalTextColor }}>
           Already have an account?{" "}
           <Link
             href="/auth/login"
-            className="font-bold text-foreground underline-offset-4 hover:underline"
+            className="font-bold underline-offset-4 hover:underline"
+            style={{ color: finalTextColor }}
           >
             Log in
           </Link>
