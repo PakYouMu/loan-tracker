@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation"; // Import navigation hooks
 import { lookupBorrowerData, LoanLookupResult } from "@/app/actions/loan-lookup";
 import { useMotion } from "@/components/context/motion-context";
 import MagicBento, { BentoCard } from "@/components/ui/magic-bento";
@@ -10,68 +11,85 @@ import { Label } from "@/components/ui/label";
 import { 
   Loader2, Search, Activity, FileText, 
   History, ArrowLeft, CheckCircle2, AlertTriangle, Wallet,
-  ChevronLeft, ChevronRight 
+  ChevronLeft, ChevronRight, QrCode
 } from "lucide-react";
 import { 
   PieChart, Pie, Cell, ResponsiveContainer, 
   Tooltip as RechartsTooltip, Legend 
 } from "recharts";
+import { QRCodeCard } from "@/components/loan-tracking/qr-code-card";
 
-// --- HEALTH SCORE LOGIC ---
+// ... (calculateHealth function remains the same) ...
 function calculateHealth(loans: LoanLookupResult['loans']) {
-  if (!loans.length) return { score: 100, status: "No History", color: "text-muted-foreground", hex: "#94a3b8" };
-
-  let score = 100;
-  const activeLoans = loans.filter(l => l.status === "ACTIVE");
-  const paidLoans = loans.filter(l => l.status === "PAID");
-
-  if (activeLoans.length > 1) score -= (activeLoans.length - 1) * 10;
-
-  activeLoans.forEach(loan => {
-    const paidRatio = loan.total_paid / loan.total_due;
-    if (paidRatio < 0.2) score -= 5;
-  });
-
-  score += (paidLoans.length * 5);
-  score = Math.max(0, Math.min(100, score));
-
-  let status = "Moderate";
-  let color = "text-yellow-500";
-  let hex = "#eab308";
-
-  if (score >= 85) { status = "Excellent"; color = "text-emerald-500"; hex = "#10b981"; }
-  else if (score >= 70) { status = "Good"; color = "text-green-500"; hex = "#22c55e"; }
-  else if (score < 50) { status = "At Risk"; color = "text-destructive"; hex = "#ef4444"; }
-
-  return { score, status, color, hex };
-}
+    if (!loans.length) return { score: 100, status: "No History", color: "text-muted-foreground", hex: "#94a3b8" };
+  
+    let score = 100;
+    const activeLoans = loans.filter(l => l.status === "ACTIVE");
+    const paidLoans = loans.filter(l => l.status === "PAID");
+  
+    if (activeLoans.length > 1) score -= (activeLoans.length - 1) * 10;
+  
+    activeLoans.forEach(loan => {
+      const paidRatio = loan.total_paid / loan.total_due;
+      if (paidRatio < 0.2) score -= 5;
+    });
+  
+    score += (paidLoans.length * 5);
+    score = Math.max(0, Math.min(100, score));
+  
+    let status = "Moderate";
+    let color = "text-yellow-500";
+    let hex = "#eab308";
+  
+    if (score >= 85) { status = "Excellent"; color = "text-emerald-500"; hex = "#10b981"; }
+    else if (score >= 70) { status = "Good"; color = "text-green-500"; hex = "#22c55e"; }
+    else if (score < 50) { status = "At Risk"; color = "text-destructive"; hex = "#ef4444"; }
+  
+    return { score, status, color, hex };
+  }
 
 export default function LoanTrackerClient() {
   const { reduceMotion } = useMotion();
+  const searchParams = useSearchParams(); // Read URL params
+  const router = useRouter(); // To update URL without reload
+
   const [state, setState] = useState<'INPUT' | 'RESULTS'>('INPUT');
   const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<LoanLookupResult | null>(null);
 
-  // Pagination State for Active Loans
+  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // --- AUTO-SEARCH LOGIC ---
+  useEffect(() => {
+    const queryName = searchParams.get('q');
+    
+    // Only auto-search if we have a query AND we haven't loaded data yet
+    if (queryName && !data && !isLoading && state === 'INPUT') {
+      setFullName(queryName);
+      performLookup(queryName);
+    }
+  }, [searchParams]); // Run when URL params change
+
+  // Separated logic to be reusable
+  const performLookup = async (nameToSearch: string) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const result = await lookupBorrowerData(fullName);
+      const result = await lookupBorrowerData(nameToSearch);
       
       if (result.error) {
         setError(result.error);
       } else if (result.success && result.data) {
         setData(result.data);
-        setCurrentPage(1); // Reset pagination on new search
+        setCurrentPage(1);
         setState('RESULTS');
+        // Update URL to match search (so refreshing keeps the data)
+        router.replace(`/loan-tracking?q=${encodeURIComponent(nameToSearch)}`, { scroll: false });
       }
     } catch (err) {
       setError("Connection failed. Please check your internet.");
@@ -80,12 +98,19 @@ export default function LoanTrackerClient() {
     }
   };
 
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    performLookup(fullName);
+  };
+
   const handleReset = () => {
     setFullName("");
     setData(null);
     setState('INPUT');
     setError(null);
     setCurrentPage(1);
+    // Clear URL param on reset
+    router.replace('/loan-tracking', { scroll: false });
   };
 
   // --- RENDER INPUT STATE ---
@@ -104,6 +129,7 @@ export default function LoanTrackerClient() {
             clickEffect={true}
             className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-4 gap-responsive"
           >
+             {/* Spacers */}
              <div className="hidden md:block col-span-1 row-span-1" />
              <div className="hidden md:block col-span-1 row-span-1" />
              <div className="hidden md:block col-span-1 row-span-1" />
@@ -181,14 +207,20 @@ export default function LoanTrackerClient() {
     { name: 'Balance', value: totalDue - totalPaid, color: '#f59e0b' },
   ];
 
-  // --- PAGINATION LOGIC ---
   const totalPages = Math.ceil(activeLoans.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentLoans = activeLoans.slice(startIndex, startIndex + itemsPerPage);
-  const emptyRows = itemsPerPage - currentLoans.length; // Calculate ghost rows
+  const emptyRows = itemsPerPage - currentLoans.length; 
 
   const handlePrev = () => { if (currentPage > 1) setCurrentPage(p => p - 1); };
   const handleNext = () => { if (currentPage < totalPages) setCurrentPage(p => p + 1); };
+
+  // --- SMART QR CODE GENERATION ---
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "");
+
+  const qrData = baseUrl 
+    ? `${baseUrl}/loan-tracking?q=${encodeURIComponent(borrower.first_name + " " + borrower.last_name)}` 
+    : "";
 
   return (
     <div className="min-h-screen w-full max-w-[90rem] mx-auto p-responsive pb-20 space-y-6 flex flex-col justify-center">
@@ -231,10 +263,8 @@ export default function LoanTrackerClient() {
                   strokeLinecap="round"
                 />
               </svg>
-              {/* UPDATED: Tighter leading and specific flex alignment for visual centering */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center pt-1">
+              <div className="absolute bottom-[2.4rem] right-[3rem] flex items-center justify-center">
                 <span className={`text-4xl font-bold leading-none ${health.color}`}>{health.score}</span>
-                <span className="text-xs text-muted-foreground uppercase mt-1">/ 100</span>
               </div>
             </div>
             
@@ -247,16 +277,14 @@ export default function LoanTrackerClient() {
           </div>
         </BentoCard>
 
-        {/* 2. ACTIVE LOANS LIST (With Pagination) */}
+        {/* 2. ACTIVE LOANS LIST */}
         <BentoCard 
           title={`Active Loans (${activeLoans.length})`} 
           icon={<FileText className="h-4 w-4" />}
-          // UPDATED: Increased row-span to fit 3 items + footer comfortably
           className="col-span-1 md:col-span-3 md:row-span-2 min-h-[450px]"
-          noPadding={true} // We manage padding internally for the footer to sit flush
+          noPadding={true}
         >
           <div className="flex flex-col h-full w-full">
-            {/* Scrollable Content Area */}
             <div className="flex-1 p-6 space-y-3">
               {activeLoans.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full border border-dashed rounded-lg bg-muted/10 text-muted-foreground">
@@ -296,7 +324,6 @@ export default function LoanTrackerClient() {
                     </div>
                   ))}
 
-                  {/* Ghost Rows to maintain height */}
                   {emptyRows > 0 && Array.from({ length: emptyRows }).map((_, i) => (
                      <div key={`ghost-${i}`} className="h-[88px] w-full border border-transparent" aria-hidden="true" />
                   ))}
@@ -304,7 +331,6 @@ export default function LoanTrackerClient() {
               )}
             </div>
 
-            {/* Pagination Footer */}
             {activeLoans.length > 0 && (
               <div className="p-4 border-t border-border/50 flex items-center justify-between bg-muted/5 mt-auto h-[72px] shrink-0">
                 <span className="text-xs text-muted-foreground">
@@ -331,7 +357,7 @@ export default function LoanTrackerClient() {
           </div>
         </BentoCard>
 
-        {/* 3. PAYMENT BREAKDOWN CHART */}
+        {/* 3. PAYMENT STATUS */}
         <BentoCard 
           title="Payment Status" 
           icon={<AlertTriangle className="h-4 w-4" />}
@@ -363,7 +389,7 @@ export default function LoanTrackerClient() {
           </div>
         </BentoCard>
 
-        {/* 4. HISTORY SUMMARY */}
+        {/* 4. HISTORY */}
         <BentoCard 
           title="History" 
           icon={<History className="h-4 w-4" />}
@@ -383,6 +409,16 @@ export default function LoanTrackerClient() {
               <span className="text-2xl font-bold text-blue-500">{payments.length}</span>
             </div>
           </div>
+        </BentoCard>
+
+        {/* 5. QR CODE */}
+        <BentoCard 
+          title="Share / Save" 
+          icon={<QrCode className="h-4 w-4" />}
+          className="col-span-1 md:col-span-1 min-h-[250px]"
+        >
+           {/* Now includes the search params! */}
+           <QRCodeCard data={qrData} />
         </BentoCard>
 
       </MagicBento>
