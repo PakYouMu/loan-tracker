@@ -13,9 +13,9 @@ export default function AboutClient() {
   const { reduceMotion } = useMotion();
 
   return (
-    <div className="w-full max-w-[90rem] mx-auto p-responsive space-y-4 overflow-y-auto">
+    <div className="w-full max-w-[90rem] mx-auto p-responsive space-y-4 overflow-y-auto mt-16 md:mt-0">
       {/* Hero Text - Responsive margins and font sizes */}
-      <div className="text-center md:text-left animate-in fade-in slide-in-from-bottom-4 duration-700 about-hero-text about-page-top-padding">
+      <div className="text-center md:text-left animate-in fade-in slide-in-from-bottom-4 duration-700 about-hero-text">
         <p className="text-muted-foreground max-w-2xl about-card-body">
           The Clear Line. Bringing clarity to chaotic financial tracking.
         </p>
