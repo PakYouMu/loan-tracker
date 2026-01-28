@@ -243,8 +243,54 @@ export default function HelixCanvas({
       isHoveringRef.current = 0;
     };
 
+    const handleTouchStart = (e: TouchEvent) => {
+      e.preventDefault(); // Prevent scrolling while touching the canvas
+      if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        const rect = el.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        
+        const resX = uniforms.iResolution.value.x;
+        const resY = uniforms.iResolution.value.y;
+        
+        const nx = (2.0 * x * dpr - resX) / resY;
+        const ny = -((2.0 * y * dpr - resY) / resY);
+        
+        targetMouseRef.current.set(nx, ny);
+        isHoveringRef.current = 1;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        const rect = el.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        
+        const resX = uniforms.iResolution.value.x;
+        const resY = uniforms.iResolution.value.y;
+        
+        const nx = (2.0 * x * dpr - resX) / resY;
+        const ny = -((2.0 * y * dpr - resY) / resY);
+        
+        targetMouseRef.current.set(nx, ny);
+        isHoveringRef.current = 1;
+      }
+    };
+
+    const handleTouchEnd = () => {
+      isHoveringRef.current = 0;
+    };
+
     el.addEventListener('pointermove', handlePointerMove);
     el.addEventListener('pointerleave', handlePointerLeave);
+    el.addEventListener('touchstart', handleTouchStart, { passive: false });
+    el.addEventListener('touchmove', handleTouchMove, { passive: false });
+    el.addEventListener('touchend', handleTouchEnd);
+    el.addEventListener('touchcancel', handleTouchEnd);
 
     let raf = 0;
     const animate = () => {
@@ -265,6 +311,10 @@ export default function HelixCanvas({
       resizeObserver.disconnect();
       el.removeEventListener('pointermove', handlePointerMove);
       el.removeEventListener('pointerleave', handlePointerLeave);
+      el.removeEventListener('touchstart', handleTouchStart);
+      el.removeEventListener('touchmove', handleTouchMove);
+      el.removeEventListener('touchend', handleTouchEnd);
+      el.removeEventListener('touchcancel', handleTouchEnd);
       
       geometry.dispose();
       material.dispose();
@@ -284,7 +334,8 @@ export default function HelixCanvas({
         height: '100%',
         opacity: opacity,
         mixBlendMode: mixBlendMode,
-        pointerEvents: 'auto'
+        pointerEvents: 'auto',
+        touchAction: 'none' // Prevent default touch behaviors
       }}
     />
   );
