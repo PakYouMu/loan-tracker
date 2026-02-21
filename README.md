@@ -13,10 +13,11 @@ Welcome to **La Claire Ligña**, a premium alternative to messy spreadsheet acco
 
 ## Why La Claire Ligña?
 
-- **Immutable Financial Integrity**: Forget broken spreadsheet formulas. Every loan, payment, and deletion is written securely into an append-tracking ledger (deposits, disbursements, repayments), guaranteeing your "Cash on Hand" perfectly matches reality.
+- **Immutable Financial Integrity**: Forget broken spreadsheet formulas. Every loan, payment, and deletion is written securely into an append-tracking ledger (deposits, disbursements, repayments), guaranteeing your Cash-on-Hand perfectly matches reality.
 - **Automated Amortization**: Provide a principal, flat interest rate, and duration, and the system instantly maps out bi-monthly schedule payments bridging the entire loan lifecycle.
 - **Fluid & Modern UX**: Built with Shadcn UI, pure CSS animations, and Three.js 60FPS fluid backgrounds, the entire application feels like a native mobile app, functioning beautifully in both Light and Dark modes.
 - **Auditable Rollbacks**: Need to void a bad loan? The system safely restores your initial cash disbursement while retaining the voided record for transparent historical auditing.
+- **AI-Powered OCR**: Skip manual entry. Capture photos of borrower IDs and documents to automatically populate profiles with precision, streamlining your onboarding workflow.
 
 <br />
 
