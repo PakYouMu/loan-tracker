@@ -131,6 +131,14 @@ ALTER FUNCTION "public"."generate_payment_schedule"() OWNER TO "postgres";
 CREATE OR REPLACE FUNCTION "public"."handle_loan_update"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
+DECLARE
+  v_amortization numeric(12, 2);
+  v_current_date date;
+  v_end_date date;
+  v_year integer;
+  v_month integer;
+  v_due_date_1 date;
+  v_due_date_2 date;
 BEGIN
   -- Only regenerate if financial terms changed
   IF NEW.principal <> OLD.principal OR 
@@ -138,15 +146,46 @@ BEGIN
      NEW.duration_months <> OLD.duration_months OR
      NEW.start_date <> OLD.start_date THEN
      
-     -- 1. Delete all PENDING schedules (Keep PAID ones)
+     -- 1. Delete all PENDING schedules (Keep PAID ones untouched!)
      DELETE FROM public.payment_schedule 
      WHERE loan_id = NEW.id AND status = 'PENDING';
 
-     -- 2. Call the generator (It will fill in the gaps based on new start date/terms)
-     -- Note: You might need to adjust generate_payment_schedule to not duplicate if you have specific logic,
-     -- but for a simple "reset", we usually treat it as a fresh generation for the remaining time.
-     -- Ideally, for a robust system, you prevent editing active loans with payments, 
-     -- but for this app, we will allow it.
+     -- 2. Regenerate the schedules starting from start_date
+    v_amortization := round(
+        (NEW.principal + (NEW.principal * (NEW.interest_rate / 100.0) * NEW.duration_months)) 
+        / (NEW.duration_months * 2.0), 
+        2
+    );
+
+    v_current_date := NEW.start_date;
+    v_end_date := NEW.start_date + (NEW.duration_months || ' months')::interval;
+    
+    WHILE v_current_date <= v_end_date LOOP
+        v_year := date_part('year', v_current_date);
+        v_month := date_part('month', v_current_date);
+
+        v_due_date_1 := make_date(v_year, v_month, 15);
+
+        IF v_month = 2 THEN
+           v_due_date_2 := (date_trunc('month', v_current_date) + interval '1 month' - interval '1 day')::date;
+        ELSE
+           v_due_date_2 := make_date(v_year, v_month, 30);
+        END IF;
+
+        IF v_due_date_1 > NEW.start_date AND v_due_date_1 <= v_end_date THEN
+           INSERT INTO public.payment_schedule (loan_id, due_date, expected_amount, status)
+           VALUES (NEW.id, v_due_date_1, v_amortization, 'PENDING')
+           ON CONFLICT (loan_id, due_date) DO NOTHING;
+        END IF;
+
+        IF v_due_date_2 > NEW.start_date AND v_due_date_2 <= v_end_date THEN
+           INSERT INTO public.payment_schedule (loan_id, due_date, expected_amount, status)
+           VALUES (NEW.id, v_due_date_2, v_amortization, 'PENDING')
+           ON CONFLICT (loan_id, due_date) DO NOTHING;
+        END IF;
+
+        v_current_date := v_current_date + interval '1 month';
+    END LOOP;
   END IF;
   RETURN NEW;
 END;
@@ -541,6 +580,8 @@ SELECT
     NULL::numeric(5,2) AS "interest_rate",
     NULL::integer AS "duration_months",
     NULL::"date" AS "start_date",
+    NULL::boolean AS "is_void",
+    NULL::"text" AS "void_reason",
     NULL::numeric(12,2) AS "total_interest",
     NULL::numeric(12,2) AS "total_due",
     NULL::numeric AS "amortization_per_payday",
@@ -772,12 +813,15 @@ CREATE OR REPLACE VIEW "public"."view_loan_summary" WITH ("security_invoker"='tr
     "l"."interest_rate",
     "l"."duration_months",
     "l"."start_date",
+    "l"."is_void",
+    "l"."void_reason",
     ((("l"."principal" * ("l"."interest_rate" / 100.0)) * ("l"."duration_months")::numeric))::numeric(12,2) AS "total_interest",
     (("l"."principal" + (("l"."principal" * ("l"."interest_rate" / 100.0)) * ("l"."duration_months")::numeric)))::numeric(12,2) AS "total_due",
     "round"((("l"."principal" + (("l"."principal" * ("l"."interest_rate" / 100.0)) * ("l"."duration_months")::numeric)) / (("l"."duration_months")::numeric * 2.0)), 2) AS "amortization_per_payday",
     COALESCE("sum"("p"."amount"), (0)::numeric) AS "total_paid",
     ((("l"."principal" + (("l"."principal" * ("l"."interest_rate" / 100.0)) * ("l"."duration_months")::numeric)) - COALESCE("sum"("p"."amount"), (0)::numeric)))::numeric(12,2) AS "remaining_balance",
         CASE
+            WHEN ("l"."is_void" = true) THEN 'VOIDED'::"text"
             WHEN ((("l"."principal" + (("l"."principal" * ("l"."interest_rate" / 100.0)) * ("l"."duration_months")::numeric)) - COALESCE("sum"("p"."amount"), (0)::numeric)) <= (0)::numeric) THEN 'PAID'::"text"
             ELSE 'ACTIVE'::"text"
         END AS "status"
@@ -785,7 +829,7 @@ CREATE OR REPLACE VIEW "public"."view_loan_summary" WITH ("security_invoker"='tr
      JOIN "public"."borrowers" "b" ON (("l"."borrower_id" = "b"."id")))
      LEFT JOIN "public"."payments" "p" ON ((("l"."id" = "p"."loan_id") AND ("p"."deleted_at" IS NULL))))
   WHERE ("l"."deleted_at" IS NULL)
-  GROUP BY "l"."id", "l"."fund_id", "b"."first_name", "b"."last_name", "b"."id";
+  GROUP BY "l"."id", "l"."fund_id", "b"."first_name", "b"."last_name", "b"."id", "l"."is_void", "l"."void_reason";
 
 
 
@@ -1198,13 +1242,11 @@ GRANT ALL ON TABLE "public"."profiles" TO "service_role";
 
 
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."view_loan_summary" TO "authenticated";
-GRANT ALL ON TABLE "public"."view_loan_summary" TO "service_role";
+GRANT SELECT ON TABLE "public"."view_loan_summary" TO "authenticated";
 
 
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."view_borrower_stats" TO "authenticated";
-GRANT ALL ON TABLE "public"."view_borrower_stats" TO "service_role";
+GRANT SELECT ON TABLE "public"."view_borrower_stats" TO "authenticated";
 
 
 
